@@ -1,0 +1,13 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #333333;
+}
+
+body {
+  background-color: #ffffff;
+  color: #333333;
+  font-family: "Malgun Gothic", "맑은 고딕", "Apple SD Gothic Neo", "Noto Sans KR", dotum, "돋움", sans-serif;
+  letter-spacing: -0.02em;
+}

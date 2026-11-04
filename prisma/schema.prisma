@@ -1,0 +1,38 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Complaint {
+  id           Int      @id @default(autoincrement())
+  title        String
+  content      String
+  category     String   @default("OTHER") // SERVICE, FACILITY, SYSTEM, OTHER
+  status       String   @default("PENDING") // PENDING, IN_PROGRESS, RESOLVED
+  isSecret     Boolean  @default(false)
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  replies      Reply[]
+
+  @@index([status])
+  @@index([category])
+  @@index([createdAt])
+}
+
+model Reply {
+  id          Int       @id @default(autoincrement())
+  complaintId Int
+  authorName  String    @default("담당 관리자")
+  content     String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  complaint   Complaint @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+
+  @@index([complaintId])
+}
+
