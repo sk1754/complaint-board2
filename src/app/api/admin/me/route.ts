@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
-import { isAdminAuthenticated } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/auth";
 
 export async function GET() {
-  const isAdmin = await isAdminAuthenticated();
-  return NextResponse.json({ isAdmin });
+  const user = await getCurrentUser();
+  return NextResponse.json({
+    isAdmin: user?.role === "ADMIN",
+    user,
+  });
 }
-

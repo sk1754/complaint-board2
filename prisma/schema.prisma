@@ -7,32 +7,114 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Complaint {
-  id           Int      @id @default(autoincrement())
-  title        String
-  content      String
-  category     String   @default("OTHER") // SERVICE, FACILITY, SYSTEM, OTHER
-  status       String   @default("PENDING") // PENDING, IN_PROGRESS, RESOLVED
-  isSecret     Boolean  @default(false)
-  passwordHash String
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  replies      Reply[]
+model User {
+  id             Int            @id @default(autoincrement())
+  username       String         @unique
+  passwordHash   String
+  name           String
+  department     String         @default("COMP") // COMP, AERO, MECHA, INFO
+  role           String         @default("USER") // USER, DEPT_ADMIN, SUPER_ADMIN
+  isSuspended    Boolean        @default(false) // 이용 제한 여부
+  suspendedUntil DateTime?      // 이용 제한 종료일시
+  suspendReason  String?        // 이용 제한 사유
+  createdAt      DateTime       @default(now())
+  posts          Post[]
+  comments       Comment[]
+  notifications  Notification[]
+}
 
-  @@index([status])
-  @@index([category])
+model Post {
+  id             Int          @id @default(autoincrement())
+  board          String       // COMMON, COMP, AERO, MECHA, INFO
+  targetDepts    String       @default("ALL")
+  isNotice       Boolean      @default(false)
+  isPinned       Boolean      @default(false)
+  isHidden       Boolean      @default(false)
+  hiddenReason   String?      // 관리자 숨김 조치 사유
+  questionStatus String       @default("WAITING") // WAITING, ANSWERED, RESOLVED
+  title          String
+  content        String
+  views          Int          @default(0)
+  authorId       Int
+  authorName     String
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  author         User         @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  comments       Comment[]
+  attachments    Attachment[]
+
+  @@index([board])
+  @@index([isNotice])
+  @@index([questionStatus])
   @@index([createdAt])
 }
 
-model Reply {
-  id          Int       @id @default(autoincrement())
-  complaintId Int
-  authorName  String    @default("담당 관리자")
-  content     String
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  complaint   Complaint @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+model Comment {
+  id         Int      @id @default(autoincrement())
+  postId     Int
+  authorId   Int
+  authorName String
+  authorRole String   @default("USER")
+  isOfficial Boolean  @default(false)
+  content    String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  post       Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author     User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
 
-  @@index([complaintId])
+  @@index([postId])
 }
 
+model Attachment {
+  id         Int      @id @default(autoincrement())
+  postId     Int
+  fileName   String
+  mimeType   String
+  fileSize   Int
+  dataBase64 String
+  createdAt  DateTime @default(now())
+  post       Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId])
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  postId    Int
+  type      String   @default("NEW_ANSWER") // NEW_ANSWER, OFFICIAL_ANSWER
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Report {
+  id           Int      @id @default(autoincrement())
+  reporterId   Int
+  reporterName String
+  targetType   String   // POST, COMMENT
+  targetId     Int      @default(0)
+  postId       Int?
+  commentId    Int?
+  reason       String
+  status       String   @default("PENDING") // PENDING(접수), REVIEWING(검토 중), RESOLVED(완료), REJECTED(반려)
+  adminNote    String?
+  handledBy    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model AuditLog {
+  id         Int      @id @default(autoincrement())
+  adminId    Int
+  adminName  String
+  adminRole  String   @default("SUPER_ADMIN")
+  action     String
+  targetType String   @default("POST")
+  targetId   Int      @default(0)
+  detail     String
+  createdAt  DateTime @default(now())
+}

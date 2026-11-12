@@ -1,11 +1,10 @@
-import { CATEGORY_MAP, ComplaintCategory } from "@/lib/constants";
+import { BOARD_MAP, BoardType } from "@/lib/constants";
 
-export function CategoryBadge({ category }: { category: string }) {
-  const info = CATEGORY_MAP[category as ComplaintCategory] || CATEGORY_MAP.OTHER;
-
+export function CategoryBadge({ board }: { board: string }) {
+  const info = BOARD_MAP[board as BoardType] || BOARD_MAP.COMP;
   return (
     <span className="text-[13px] text-[#555555] font-normal">
-      {info.label}
+      {info.shortName}
     </span>
   );
 }
